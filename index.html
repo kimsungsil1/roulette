@@ -4,25 +4,119 @@
   <meta charset="UTF-8">
   <title>카페듀몽블랑 이벤트 룰렛</title>
   <style>
-    body { text-align: center; font-family: Arial, sans-serif; }
-    #wheel { 
-      margin: 0 auto; 
-      width: 300px; 
-      height: 300px; 
-      border: 10px solid #333; 
+    body {
+      text-align: center; 
+      font-family: Arial, sans-serif; 
+      margin: 0; 
+      padding: 0;
+    }
+    h1 {
+      margin-top: 30px;
+    }
+    #wheelContainer {
+      position: relative;
+      margin: 0 auto;
+      width: 300px;
+      height: 300px;
+    }
+    /* 룰렛 자체 */
+    #wheel {
+      width: 100%;
+      height: 100%;
+      border: 10px solid #333;
       border-radius: 50%;
       position: relative;
       overflow: hidden;
+      transform-origin: center center;
+      /* 회전이 처음에는 0도로 시작 */
+      transform: rotate(0deg);
     }
-    /* 간단한 세그먼트 배경은 실제 디자인에 맞게 수정 */
-    #spinBtn { margin-top: 20px; padding: 10px 20px; font-size: 16px; }
-    #result { margin-top: 20px; font-size: 20px; font-weight: bold; }
-    #coupon { margin-top: 20px; }
+    /* 룰렛의 분할 영역(5등분) */
+    .segment {
+      position: absolute;
+      width: 150px;   /* 절반 */
+      height: 300px;
+      top: 0;
+      left: 150px;    /* 중간 지점부터 시작 */
+      transform-origin: left center;
+      /* 필요 시 임의의 배경색으로 구분 */
+    }
+    /* 5등까지 총 5개 (72도씩) */
+    .seg1 {
+      transform: rotate(0deg);
+      background-color: #f99;
+    }
+    .seg2 {
+      transform: rotate(72deg);
+      background-color: #9f9;
+    }
+    .seg3 {
+      transform: rotate(144deg);
+      background-color: #99f;
+    }
+    .seg4 {
+      transform: rotate(216deg);
+      background-color: #ff9;
+    }
+    .seg5 {
+      transform: rotate(288deg);
+      background-color: #9ff;
+    }
+    /* 각 세그먼트 내부 텍스트도 확인 가능하게(임의 예시) */
+    .segment span {
+      display: block;
+      text-align: center;
+      padding-top: 130px; /* 세그먼트 가운데쯤 */
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    /* 룰렛 위에 고정된 포인터(삼각형) */
+    #pointer {
+      position: absolute;
+      top: -20px; /* 룰렛 중심 위에 걸치도록 */
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 15px solid transparent;
+      border-right: 15px solid transparent;
+      border-bottom: 20px solid #c00;
+      z-index: 999;
+    }
+
+    #spinBtn {
+      margin-top: 20px; 
+      padding: 10px 20px; 
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #result {
+      margin-top: 20px; 
+      font-size: 20px; 
+      font-weight: bold;
+    }
+    #coupon {
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
   <h1>카페듀몽블랑 룰렛 이벤트</h1>
-  <div id="wheel"></div>
+
+  <!-- 룰렛 컨테이너 (포인터와 룰렛 본체) -->
+  <div id="wheelContainer">
+    <div id="pointer"></div>
+    <div id="wheel">
+      <!-- 5개 세그먼트 (1등 ~ 5등) -->
+      <div class="segment seg1"><span>1등</span></div>
+      <div class="segment seg2"><span>2등</span></div>
+      <div class="segment seg3"><span>3등</span></div>
+      <div class="segment seg4"><span>4등</span></div>
+      <div class="segment seg5"><span>5등</span></div>
+    </div>
+  </div>
+
   <button id="spinBtn">룰렛 돌리기</button>
   <div id="result"></div>
   <div id="coupon"></div>
@@ -37,9 +131,9 @@
       { name: "5등", probability: 50, coupon: "coupon5.pdf" }
     ];
 
-    // 확률에 따라 당첨 등수를 결정하는 함수
+    // 확률로 당첨 등수를 결정하는 함수
     function getPrize() {
-      let rand = Math.random() * 100; // 0~100 사이 난수
+      let rand = Math.random() * 100; // 0~100 난수
       let cumulative = 0;
       for (let prize of prizes) {
         cumulative += prize.probability;
@@ -53,37 +147,56 @@
     const couponDiv = document.getElementById("coupon");
     const spinBtn = document.getElementById("spinBtn");
 
+    // 회전 중 애니메이션 시간 (ms)
+    const SPIN_DURATION = 4000; 
+
     spinBtn.addEventListener("click", function() {
       spinBtn.disabled = true;
       resultDiv.textContent = "";
       couponDiv.innerHTML = "";
-      const prize = getPrize();
 
-      // 기본 회전 각도와 당첨 세그먼트에 따른 회전 조정 (단순 예시)
-      const baseRotation = 360 * 5; // 5바퀴 회전
-      let prizeIndex = prizes.findIndex(p => p.name === prize.name);
-      // 세그먼트별 각도 범위 (예: 1등은 좁게 10도, 5등은 넓게 170도)
-      const segmentAngles = {
-        "1등": 10,
-        "2등": 30,
-        "3등": 60,
-        "4등": 90,
-        "5등": 170
-      };
-      // 해당 세그먼트 내에서 랜덤 오프셋 적용
-      const segmentAngle = segmentAngles[prize.name];
-      const offset = Math.random() * segmentAngle;
-      const targetAngle = baseRotation + (prizeIndex * (360 / prizes.length)) + offset;
+      // 룰렛 위치를 0도로 초기화 (매번 새로 시작)
+      wheel.style.transition = "none";
+      wheel.style.transform = "rotate(0deg)";
 
-      wheel.style.transition = "transform 4s ease-out";
-      wheel.style.transform = `rotate(${targetAngle}deg)`;
-
+      // 아주 짧은 시간 뒤(다음 프레임)에 회전 애니메이션 부여
       setTimeout(() => {
-        resultDiv.textContent = `축하합니다! ${prize.name} 당첨!`;
-        couponDiv.innerHTML = `<a href="${prize.coupon}" download>당첨 쿠폰 다운로드</a>`;
-        spinBtn.disabled = false;
-        // 여기에 confetti 효과나 음향 효과를 추가해 당첨 느낌을 강화할 수 있음
-      }, 4000);
+        wheel.style.transition = "transform 4s ease-out";
+
+        // 당첨 결과 가져오기
+        const prize = getPrize();
+
+        // 기본 회전각: 5바퀴 이상 돌리고 + 당첨 세그먼트 방향
+        const baseRotation = 360 * 5; // 5바퀴
+        let prizeIndex = prizes.findIndex(p => p.name === prize.name);
+
+        // 각 등수별로 분할된 실제 각도 범위 설정(총 360도 / 5 = 72도씩)
+        // 원하시면 세분화 가능합니다
+        const segmentAngles = {
+          "1등": 72,
+          "2등": 72,
+          "3등": 72,
+          "4등": 72,
+          "5등": 72
+        };
+
+        // 당첨 세그먼트 내에서 랜덤하게 약간의 오프셋을 주어
+        // 같은 등급 안에서도 매번 약간 다른 위치에 멈추게 함
+        const offset = Math.random() * segmentAngles[prize.name];
+
+        // 최종 회전각
+        const targetAngle = baseRotation 
+                            + (prizeIndex * 72) 
+                            + offset;
+
+        wheel.style.transform = `rotate(${targetAngle}deg)`;
+
+        setTimeout(() => {
+          resultDiv.textContent = `축하합니다! ${prize.name} 당첨!`;
+          couponDiv.innerHTML = `<a href="${prize.coupon}" download>당첨 쿠폰 다운로드</a>`;
+          spinBtn.disabled = false;
+        }, SPIN_DURATION);
+      }, 50);
     });
   </script>
 </body>
