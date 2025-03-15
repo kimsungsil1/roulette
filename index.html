@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>카페듀몽블랑 이벤트 룰렛</title>
+  <style>
+    body { text-align: center; font-family: Arial, sans-serif; }
+    #wheel { 
+      margin: 0 auto; 
+      width: 300px; 
+      height: 300px; 
+      border: 10px solid #333; 
+      border-radius: 50%;
+      position: relative;
+      overflow: hidden;
+    }
+    /* 간단한 세그먼트 배경은 실제 디자인에 맞게 수정 */
+    #spinBtn { margin-top: 20px; padding: 10px 20px; font-size: 16px; }
+    #result { margin-top: 20px; font-size: 20px; font-weight: bold; }
+    #coupon { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>카페듀몽블랑 룰렛 이벤트</h1>
+  <div id="wheel"></div>
+  <button id="spinBtn">룰렛 돌리기</button>
+  <div id="result"></div>
+  <div id="coupon"></div>
+
+  <script>
+    // 각 등수와 당첨 확률, 쿠폰 파일 설정
+    const prizes = [
+      { name: "1등", probability: 1, coupon: "coupon1.pdf" },
+      { name: "2등", probability: 4, coupon: "coupon2.pdf" },
+      { name: "3등", probability: 15, coupon: "coupon3.pdf" },
+      { name: "4등", probability: 30, coupon: "coupon4.pdf" },
+      { name: "5등", probability: 50, coupon: "coupon5.pdf" }
+    ];
+
+    // 확률에 따라 당첨 등수를 결정하는 함수
+    function getPrize() {
+      let rand = Math.random() * 100; // 0~100 사이 난수
+      let cumulative = 0;
+      for (let prize of prizes) {
+        cumulative += prize.probability;
+        if (rand < cumulative) return prize;
+      }
+      return prizes[prizes.length - 1];
+    }
+
+    const wheel = document.getElementById("wheel");
+    const resultDiv = document.getElementById("result");
+    const couponDiv = document.getElementById("coupon");
+    const spinBtn = document.getElementById("spinBtn");
+
+    spinBtn.addEventListener("click", function() {
+      spinBtn.disabled = true;
+      resultDiv.textContent = "";
+      couponDiv.innerHTML = "";
+      const prize = getPrize();
+
+      // 기본 회전 각도와 당첨 세그먼트에 따른 회전 조정 (단순 예시)
+      const baseRotation = 360 * 5; // 5바퀴 회전
+      let prizeIndex = prizes.findIndex(p => p.name === prize.name);
+      // 세그먼트별 각도 범위 (예: 1등은 좁게 10도, 5등은 넓게 170도)
+      const segmentAngles = {
+        "1등": 10,
+        "2등": 30,
+        "3등": 60,
+        "4등": 90,
+        "5등": 170
+      };
+      // 해당 세그먼트 내에서 랜덤 오프셋 적용
+      const segmentAngle = segmentAngles[prize.name];
+      const offset = Math.random() * segmentAngle;
+      const targetAngle = baseRotation + (prizeIndex * (360 / prizes.length)) + offset;
+
+      wheel.style.transition = "transform 4s ease-out";
+      wheel.style.transform = `rotate(${targetAngle}deg)`;
+
+      setTimeout(() => {
+        resultDiv.textContent = `축하합니다! ${prize.name} 당첨!`;
+        couponDiv.innerHTML = `<a href="${prize.coupon}" download>당첨 쿠폰 다운로드</a>`;
+        spinBtn.disabled = false;
+        // 여기에 confetti 효과나 음향 효과를 추가해 당첨 느낌을 강화할 수 있음
+      }, 4000);
+    });
+  </script>
+</body>
+</html>
