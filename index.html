@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>카페듀몽블랑 이벤트 룰렛</title>
+  <title>카페듀몽블랑 룰렛 이벤트</title>
   <style>
     body {
       text-align: center; 
@@ -13,6 +13,7 @@
     h1 {
       margin-top: 30px;
     }
+
     #wheelContainer {
       position: relative;
       margin: 0 auto;
@@ -28,53 +29,49 @@
       position: relative;
       overflow: hidden;
       transform-origin: center center;
-      /* 회전이 처음에는 0도로 시작 */
       transform: rotate(0deg);
     }
-    /* 룰렛의 분할 영역(5등분) */
+    /* 룰렛 분할 영역(4등분) */
     .segment {
       position: absolute;
-      width: 150px;   /* 절반 */
-      height: 300px;
+      width: 150px;   /* 지름의 절반 */
+      height: 300px; 
       top: 0;
-      left: 150px;    /* 중간 지점부터 시작 */
+      left: 150px;    /* 룰렛 중앙 기준으로 시작 */
       transform-origin: left center;
-      /* 필요 시 임의의 배경색으로 구분 */
     }
-    /* 5등까지 총 5개 (72도씩) */
+    /* 각 4칸(90도씩) */
     .seg1 {
       transform: rotate(0deg);
-      background-color: #f99;
+      background-color: #f99; /* 1등 영역 색상 */
     }
     .seg2 {
-      transform: rotate(72deg);
-      background-color: #9f9;
+      transform: rotate(90deg);
+      background-color: #9f9; /* 2등 영역 색상 */
     }
     .seg3 {
-      transform: rotate(144deg);
-      background-color: #99f;
+      transform: rotate(180deg);
+      background-color: #99f; /* 3등 영역 색상 */
     }
     .seg4 {
-      transform: rotate(216deg);
-      background-color: #ff9;
+      transform: rotate(270deg);
+      background-color: #ff9; /* 4등 영역 색상 */
     }
-    .seg5 {
-      transform: rotate(288deg);
-      background-color: #9ff;
-    }
-    /* 각 세그먼트 내부 텍스트도 확인 가능하게(임의 예시) */
+    /* 각 세그먼트 내부 텍스트(등수) */
     .segment span {
       display: block;
       text-align: center;
       padding-top: 130px; /* 세그먼트 가운데쯤 */
       font-weight: bold;
       font-size: 18px;
+      /* 글자 세우고 싶으면 회전 보정 */
+      /* transform: rotate(-45deg); */
     }
 
-    /* 룰렛 위에 고정된 포인터(삼각형) */
+    /* 포인터(삼각형) */
     #pointer {
       position: absolute;
-      top: -20px; /* 룰렛 중심 위에 걸치도록 */
+      top: -20px;
       left: 50%;
       transform: translateX(-50%);
       width: 0;
@@ -86,14 +83,15 @@
     }
 
     #spinBtn {
-      margin-top: 20px; 
-      padding: 10px 20px; 
+      margin-top: 20px;
+      padding: 10px 20px;
       font-size: 16px;
       cursor: pointer;
     }
+
     #result {
-      margin-top: 20px; 
-      font-size: 20px; 
+      margin-top: 20px;
+      font-size: 20px;
       font-weight: bold;
     }
     #coupon {
@@ -103,17 +101,16 @@
 </head>
 <body>
   <h1>카페듀몽블랑 룰렛 이벤트</h1>
-
-  <!-- 룰렛 컨테이너 (포인터와 룰렛 본체) -->
   <div id="wheelContainer">
+    <!-- 포인터 -->
     <div id="pointer"></div>
+    <!-- 룰렛 본체 -->
     <div id="wheel">
-      <!-- 5개 세그먼트 (1등 ~ 5등) -->
+      <!-- 네 개 세그먼트 (1등 ~ 4등) -->
       <div class="segment seg1"><span>1등</span></div>
       <div class="segment seg2"><span>2등</span></div>
       <div class="segment seg3"><span>3등</span></div>
       <div class="segment seg4"><span>4등</span></div>
-      <div class="segment seg5"><span>5등</span></div>
     </div>
   </div>
 
@@ -122,75 +119,63 @@
   <div id="coupon"></div>
 
   <script>
-    // 각 등수와 당첨 확률, 쿠폰 파일 설정
+    // 각 등수별 정보(이름, 확률, 쿠폰 파일)
     const prizes = [
-      { name: "1등", probability: 1, coupon: "coupon1.pdf" },
-      { name: "2등", probability: 4, coupon: "coupon2.pdf" },
+      { name: "1등", probability: 1,  coupon: "coupon1.pdf" },
+      { name: "2등", probability: 4,  coupon: "coupon2.pdf" },
       { name: "3등", probability: 15, coupon: "coupon3.pdf" },
-      { name: "4등", probability: 30, coupon: "coupon4.pdf" },
-      { name: "5등", probability: 50, coupon: "coupon5.pdf" }
+      { name: "4등", probability: 80, coupon: "coupon4.pdf" }
     ];
 
-    // 확률로 당첨 등수를 결정하는 함수
+    // 확률에 따라 당첨 결과 반환
     function getPrize() {
-      let rand = Math.random() * 100; // 0~100 난수
+      let rand = Math.random() * 100; // 0~100
       let cumulative = 0;
       for (let prize of prizes) {
         cumulative += prize.probability;
         if (rand < cumulative) return prize;
       }
+      // 혹시 분배가 100보다 작으면 마지막으로
       return prizes[prizes.length - 1];
     }
 
-    const wheel = document.getElementById("wheel");
+    const wheel     = document.getElementById("wheel");
     const resultDiv = document.getElementById("result");
     const couponDiv = document.getElementById("coupon");
-    const spinBtn = document.getElementById("spinBtn");
+    const spinBtn   = document.getElementById("spinBtn");
 
-    // 회전 중 애니메이션 시간 (ms)
-    const SPIN_DURATION = 4000; 
+    // 회전 애니메이션 시간(ms)
+    const SPIN_DURATION = 4000;
 
     spinBtn.addEventListener("click", function() {
       spinBtn.disabled = true;
       resultDiv.textContent = "";
       couponDiv.innerHTML = "";
 
-      // 룰렛 위치를 0도로 초기화 (매번 새로 시작)
+      // 매번 룰렛 각도 초기화
       wheel.style.transition = "none";
-      wheel.style.transform = "rotate(0deg)";
+      wheel.style.transform  = "rotate(0deg)";
 
-      // 아주 짧은 시간 뒤(다음 프레임)에 회전 애니메이션 부여
       setTimeout(() => {
-        wheel.style.transition = "transform 4s ease-out";
+        wheel.style.transition = `transform ${SPIN_DURATION/1000}s ease-out`;
 
-        // 당첨 결과 가져오기
+        // 당첨 결과 받기
         const prize = getPrize();
 
-        // 기본 회전각: 5바퀴 이상 돌리고 + 당첨 세그먼트 방향
+        // 룰렛 기본회전(4바퀴 이상) + 당첨칸 위치
         const baseRotation = 360 * 5; // 5바퀴
-        let prizeIndex = prizes.findIndex(p => p.name === prize.name);
+        const prizeIndex   = prizes.findIndex(p => p.name === prize.name);
 
-        // 각 등수별로 분할된 실제 각도 범위 설정(총 360도 / 5 = 72도씩)
-        // 원하시면 세분화 가능합니다
-        const segmentAngles = {
-          "1등": 72,
-          "2등": 72,
-          "3등": 72,
-          "4등": 72,
-          "5등": 72
-        };
-
-        // 당첨 세그먼트 내에서 랜덤하게 약간의 오프셋을 주어
-        // 같은 등급 안에서도 매번 약간 다른 위치에 멈추게 함
-        const offset = Math.random() * segmentAngles[prize.name];
+        // 4분할이므로 각 칸은 90도씩
+        const segmentAngle = 90;
+        // 당첨칸 안에서 약간의 랜덤 오프셋
+        const offset = Math.random() * segmentAngle;
 
         // 최종 회전각
-        const targetAngle = baseRotation 
-                            + (prizeIndex * 72) 
-                            + offset;
-
+        const targetAngle = baseRotation + (prizeIndex * segmentAngle) + offset;
         wheel.style.transform = `rotate(${targetAngle}deg)`;
 
+        // 애니메이션 끝나면 결과 표시
         setTimeout(() => {
           resultDiv.textContent = `축하합니다! ${prize.name} 당첨!`;
           couponDiv.innerHTML = `<a href="${prize.coupon}" download>당첨 쿠폰 다운로드</a>`;
