@@ -76,7 +76,6 @@
             border-radius: 50%;
             background-color: #ffecb3;
             z-index: 5;
-            transform-origin: center;
             box-shadow: 0 0 2px rgba(0,0,0,0.3);
         }
         .slice {
@@ -142,11 +141,8 @@
         
         <div class="wheel-container">
             <div class="pointer"></div>
-            <div class="gold-rim"></div>
-            <div class="wheel" id="wheel">
-                <!-- 12개의 조각으로 나누어진 룰렛 (이미지처럼) -->
-                <!-- 조각은 JavaScript로 생성됩니다 -->
-            </div>
+            <div class="gold-rim" id="gold-rim"></div>
+            <div class="wheel" id="wheel"></div>
             <div class="center-hub">
                 <div class="center-dot"></div>
             </div>
@@ -159,6 +155,7 @@
 
     <script>
         const wheel = document.getElementById('wheel');
+        const goldRim = document.getElementById('gold-rim');
         const spinButton = document.getElementById('spinButton');
         const result = document.getElementById('result');
         const timerDisplay = document.getElementById('timer');
@@ -176,37 +173,29 @@
             
             for (let i = 0; i < numSlices; i++) {
                 const slice = document.createElement('div');
-                slice.className = 'slice';
                 
                 // 다양한 색상을 번갈아가며 사용
                 const colorIndex = i % colors.length;
                 
                 // 조각의 각도와 색상
                 const angle = i * anglePerSlice;
-                const sliceStyle = `
-                    width: 0;
-                    height: 0;
-                    position: absolute;
-                    left: 50%;
-                    top: 50%;
-                    transform: rotate(${angle}deg);
-                    transform-origin: 0 0;
-                    border-left: 140px solid ${colors[colorIndex]};
-                    border-top: 9px solid transparent;
-                    border-bottom: 9px solid transparent;
-                    margin-top: -9px;
-                    z-index: 1;
-                `;
+                slice.style.position = 'absolute';
+                slice.style.width = '0';
+                slice.style.height = '0';
+                slice.style.left = '50%';
+                slice.style.top = '50%';
+                slice.style.transformOrigin = '0 0';
+                slice.style.transform = `rotate(${angle}deg)`;
+                slice.style.borderLeft = `140px solid ${colors[colorIndex]}`;
+                slice.style.borderTop = '9px solid transparent';
+                slice.style.borderBottom = '9px solid transparent';
+                slice.style.marginTop = '-9px';
+                slice.style.zIndex = '1';
                 
-                slice.style.cssText = sliceStyle;
                 wheel.appendChild(slice);
-                
-                // 각 조각에 해당하는 상품 할당 (5개 등급 반복)
-                const prizeIndex = i % prizes.length;
             }
             
             // 금색 테두리에 작은 점 추가
-            const goldRim = document.querySelector('.gold-rim');
             for (let i = 0; i < 12; i++) {
                 const dot = document.createElement('div');
                 dot.className = 'rim-dot';
@@ -222,12 +211,13 @@
             }
         }
         
-        // 룰렛 생성 함수 호출
-        createWheel();
-        
-        // 마지막으로 돌린 시간 가져오기
-        const lastSpinTime = localStorage.getItem('lastSpinTime');
-        const now = new Date().getTime();
+        // 페이지 로드 시 휠 생성
+        window.onload = function() {
+            createWheel();
+            
+            // 페이지 로드 시 타이머 업데이트
+            updateTimer();
+        };
         
         // 남은 시간 계산 및 버튼 상태 업데이트
         function updateTimer() {
@@ -260,11 +250,8 @@
             }
         }
         
-        // 페이지 로드 시 타이머 업데이트
-        updateTimer();
-        
         // 룰렛 돌리기
-        spinButton.addEventListener('click', () => {
+        spinButton.addEventListener('click', function() {
             // 버튼 비활성화
             spinButton.disabled = true;
             result.textContent = "";
@@ -279,7 +266,7 @@
             wheel.style.transform = `rotate(${randomAngle}deg)`;
             
             // 회전 완료 후
-            setTimeout(() => {
+            setTimeout(function() {
                 // 결과 표시 (어느 섹션에 멈췄는지 계산)
                 const finalRotation = randomAngle % 360;
                 const sectionIndex = Math.floor(finalRotation / sectionAngle);
@@ -287,7 +274,7 @@
                 result.textContent = `당첨 결과: ${prizes[prizeIndex]}! 축하합니다!`;
                 
                 // 현재 시간을 localStorage에 저장
-                localStorage.setItem('lastSpinTime', now.toString());
+                localStorage.setItem('lastSpinTime', new Date().getTime().toString());
                 
                 // 타이머 업데이트
                 updateTimer();
